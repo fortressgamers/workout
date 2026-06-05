@@ -1,7 +1,7 @@
-const CACHE_NAME = "workout-tracker-pro-v4";
-
+const CACHE_NAME = "workout-tracker-pro-v5";
 const FILES_TO_CACHE = [
-  "./workout_tracker_pro.html",
+  "./",
+  "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
@@ -17,11 +17,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      )
+      Promise.all(keys.map(key => key !== CACHE_NAME ? caches.delete(key) : null))
     )
   );
   self.clients.claim();
