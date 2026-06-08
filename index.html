@@ -73,23 +73,26 @@ button.danger{background:var(--danger)}
   border:1px solid #374151;
   border-radius:999px;
   padding:12px 10px;
-  font-size:1rem
+  font-size:1rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px
 }
 .week-grid button:hover{
   border-color:#596579
 }
 
-#badges{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin:8px 0 0
-}
 .badge{
-  padding:7px 12px;
+  padding:4px 10px;
   border:1px solid #374151;
   border-radius:999px;
-  background:#121821
+  background:#121821;
+  font-size:.95rem
+}
+.badge.done{
+  background:#17361f;
+  border-color:#2d7a41
 }
 
 details{
@@ -154,12 +157,11 @@ input[type=checkbox]{
     <button onclick="resetAll()" class="danger">Reset All Progress</button>
   </div>
   <div class="week-grid">
-    <button onclick="openWeek('Week 1')">Week 1</button>
-    <button onclick="openWeek('Week 2')">Week 2</button>
-    <button onclick="openWeek('Week 3')">Week 3</button>
-    <button onclick="openWeek('Week 4')">Week 4</button>
+    <button onclick="openWeek('Week 1')" id="top-week-Week_1"><span class="badge">⭕</span> Week 1</button>
+    <button onclick="openWeek('Week 2')" id="top-week-Week_2"><span class="badge">⭕</span> Week 2</button>
+    <button onclick="openWeek('Week 3')" id="top-week-Week_3"><span class="badge">⭕</span> Week 3</button>
+    <button onclick="openWeek('Week 4')" id="top-week-Week_4"><span class="badge">⭕</span> Week 4</button>
   </div>
-  <div id="badges"></div>
 </div>
 
 <div id="content"></div>
@@ -348,7 +350,7 @@ const weeks = {
   }
 };
 
-const storageKey = "workout_tracker_pro_v6";
+const storageKey = "workout_tracker_pro_v7";
 const content = document.getElementById("content");
 
 function idFor(w,d,i){ return `${w}__${d}__${i}`; }
@@ -357,7 +359,7 @@ for(const [weekName, days] of Object.entries(weeks)){
   const details = document.createElement("details");
   details.id = weekName.replace(/s+/g, "_");
   details.open = false;
-  details.innerHTML = `<summary>${weekName} <span class="badge" id="week-badge-${details.id}">⭕</span></summary>`;
+  details.innerHTML = `<summary>${weekName}</summary>`;
 
   for(const [dayName, items] of Object.entries(days)){
     const box = document.createElement("div");
@@ -425,8 +427,10 @@ function update(){
     const weekId = weekName.replace(/s+/g, "_");
     const weekBoxes = boxes.filter(cb => cb.id.startsWith(weekName + "__"));
     const weekDone = weekBoxes.length > 0 && weekBoxes.every(cb => cb.checked);
-    const weekBadge = document.getElementById(`week-badge-${weekId}`);
-    if(weekBadge) weekBadge.textContent = weekDone ? "🏆" : "⭕";
+    const topBtn = document.getElementById(`top-week-${weekId}`);
+    if(topBtn){
+      topBtn.innerHTML = `<span class="badge ${weekDone ? 'done' : ''}">${weekDone ? '🏆' : '⭕'}</span> ${weekName}`;
+    }
 
     for(const [dayName, items] of Object.entries(days)){
       const dayId = `${weekId}-${dayName.replace(/s+/g, "_")}`;
