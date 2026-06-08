@@ -4,35 +4,143 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f1115">
-<link rel="manifest" href="manifest.json">
 <title>Workout Tracker Pro</title>
 <style>
-:root{--bg:#0f1115;--card:#171b22;--card2:#1f2630;--text:#f3f6fb;--muted:#aab4c0;--accent:#7c5cff;--accent2:#22c55e;--danger:#ef4444;--line:#2b3442}
+:root{
+  --bg:#0f1115;
+  --card:#171b22;
+  --card2:#1f2630;
+  --text:#f3f6fb;
+  --muted:#aab4c0;
+  --accent:#7c5cff;
+  --accent2:#22c55e;
+  --danger:#ef4444;
+  --line:#2b3442;
+  --chip:#121821;
+}
 *{box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:linear-gradient(180deg,#0f1115,#121827);color:var(--text);max-width:1050px;margin:auto;padding:20px}
+body{
+  font-family:Arial,sans-serif;
+  background:linear-gradient(180deg,#0f1115,#121827);
+  color:var(--text);
+  max-width:1050px;
+  margin:auto;
+  padding:20px
+}
 h1{margin:0 0 8px}
 .sub{color:var(--muted);margin:0 0 18px}
-.topbar{background:var(--card);border:1px solid var(--line);padding:14px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:grid;gap:10px;margin-bottom:16px}
-progress{width:100%;height:22px;border-radius:999px;overflow:hidden}
+.topbar{
+  background:var(--card);
+  border:1px solid var(--line);
+  padding:14px;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+  display:grid;
+  gap:10px;
+  margin-bottom:16px
+}
+progress{
+  width:100%;
+  height:22px;
+  border-radius:999px;
+  overflow:hidden
+}
 progress::-webkit-progress-bar{background:#263041;border-radius:999px}
 progress::-webkit-progress-value{background:linear-gradient(90deg,var(--accent),#39b6ff);border-radius:999px}
 progress::-moz-progress-bar{background:linear-gradient(90deg,var(--accent),#39b6ff)}
-button{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:var(--accent);color:white;font-weight:700}
+button{
+  padding:10px 14px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  background:var(--accent);
+  color:white;
+  font-weight:700
+}
 button.secondary{background:#334155}
 button.danger{background:var(--danger)}
-#badges{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
-.badge{padding:7px 12px;border:1px solid #374151;border-radius:999px;background:#121821}
-details{background:var(--card);padding:10px;margin:12px 0;border:1px solid var(--line);border-radius:16px}
-summary{font-weight:800;font-size:1.08em;cursor:pointer}
-.daybox{background:var(--card2);border:1px solid #2a3340;border-radius:14px;padding:12px;margin:12px 0}
-.dayhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.dayhead h3{margin:0;display:flex;align-items:center;gap:8px}
-label{display:block;margin:8px 0;line-height:1.45}
-input[type=checkbox]{transform:scale(1.15);margin-right:8px;accent-color:var(--accent2)}
-.small{color:var(--muted);font-size:.95em}
 .row{display:flex;gap:8px;flex-wrap:wrap}
+
+.week-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-top:8px
+}
+.week-grid button{
+  width:100%;
+  background:var(--chip);
+  border:1px solid #374151;
+  border-radius:999px;
+  padding:12px 10px;
+  font-size:1rem
+}
+.week-grid button:hover{
+  border-color:#596579
+}
+
+#badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:8px 0 0
+}
+.badge{
+  padding:7px 12px;
+  border:1px solid #374151;
+  border-radius:999px;
+  background:#121821
+}
+
+details{
+  background:var(--card);
+  padding:10px;
+  margin:12px 0;
+  border:1px solid var(--line);
+  border-radius:16px
+}
+summary{
+  font-weight:800;
+  font-size:1.08em;
+  cursor:pointer;
+  list-style:none
+}
+summary::-webkit-details-marker{display:none}
+
+.daybox{
+  background:var(--card2);
+  border:1px solid #2a3340;
+  border-radius:14px;
+  padding:12px;
+  margin:12px 0
+}
+.dayhead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap
+}
+.dayhead h3{
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+label{
+  display:block;
+  margin:8px 0;
+  line-height:1.45
+}
+input[type=checkbox]{
+  transform:scale(1.15);
+  margin-right:8px;
+  accent-color:var(--accent2)
+}
+.small{color:var(--muted);font-size:.95em}
 .kpi{font-size:1.05em;font-weight:700}
 .daybadge{min-width:34px;text-align:center}
+.controls{margin-top:10px}
 </style>
 </head>
 <body>
@@ -44,6 +152,12 @@ input[type=checkbox]{transform:scale(1.15);margin-right:8px;accent-color:var(--a
   <progress id="bar" value="0" max="100"></progress>
   <div class="row">
     <button onclick="resetAll()" class="danger">Reset All Progress</button>
+  </div>
+  <div class="week-grid">
+    <button onclick="openWeek('Week 1')">Week 1</button>
+    <button onclick="openWeek('Week 2')">Week 2</button>
+    <button onclick="openWeek('Week 3')">Week 3</button>
+    <button onclick="openWeek('Week 4')">Week 4</button>
   </div>
   <div id="badges"></div>
 </div>
@@ -234,17 +348,15 @@ const weeks = {
   }
 };
 
-const storageKey = "workout_tracker_pro_v5";
+const storageKey = "workout_tracker_pro_v6";
 const content = document.getElementById("content");
-const badgeMap = {};
 
 function idFor(w,d,i){ return `${w}__${d}__${i}`; }
 
 for(const [weekName, days] of Object.entries(weeks)){
   const details = document.createElement("details");
-  details.open = false;
   details.id = weekName.replace(/s+/g, "_");
-
+  details.open = false;
   details.innerHTML = `<summary>${weekName} <span class="badge" id="week-badge-${details.id}">⭕</span></summary>`;
 
   for(const [dayName, items] of Object.entries(days)){
@@ -266,7 +378,7 @@ for(const [weekName, days] of Object.entries(weeks)){
     });
 
     const btnRow = document.createElement("div");
-    btnRow.className = "row";
+    btnRow.className = "row controls";
 
     const completeBtn = document.createElement("button");
     completeBtn.textContent = "Mark Day Complete";
@@ -323,6 +435,15 @@ function update(){
       const dayBadge = document.getElementById(`day-badge-${dayId}`);
       if(dayBadge) dayBadge.textContent = dayDone ? "🏆" : "⭕";
     }
+  }
+}
+
+function openWeek(weekLabel){
+  const id = weekLabel.replace(/s+/g, "_");
+  const el = document.getElementById(id);
+  if(el){
+    el.open = true;
+    el.scrollIntoView({behavior:"smooth", block:"start"});
   }
 }
 
