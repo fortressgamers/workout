@@ -26,12 +26,13 @@ details{background:var(--card);padding:10px;margin:12px 0;border:1px solid var(-
 summary{font-weight:800;font-size:1.08em;cursor:pointer}
 .daybox{background:var(--card2);border:1px solid #2a3340;border-radius:14px;padding:12px;margin:12px 0}
 .dayhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.dayhead h3{margin:0}
+.dayhead h3{margin:0;display:flex;align-items:center;gap:8px}
 label{display:block;margin:8px 0;line-height:1.45}
 input[type=checkbox]{transform:scale(1.15);margin-right:8px;accent-color:var(--accent2)}
 .small{color:var(--muted);font-size:.95em}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .kpi{font-size:1.05em;font-weight:700}
+.daybadge{min-width:34px;text-align:center}
 </style>
 </head>
 <body>
@@ -233,20 +234,29 @@ const weeks = {
   }
 };
 
-const storageKey = "workout_tracker_pro_v4";
+const storageKey = "workout_tracker_pro_v5";
 const content = document.getElementById("content");
+const badgeMap = {};
 
 function idFor(w,d,i){ return `${w}__${d}__${i}`; }
 
 for(const [weekName, days] of Object.entries(weeks)){
   const details = document.createElement("details");
-  details.open = true;
-  details.innerHTML = `<summary>${weekName}</summary>`;
+  details.open = false;
+  details.id = weekName.replace(/s+/g, "_");
+
+  details.innerHTML = `<summary>${weekName} <span class="badge" id="week-badge-${details.id}">⭕</span></summary>`;
 
   for(const [dayName, items] of Object.entries(days)){
     const box = document.createElement("div");
     box.className = "daybox";
-    box.innerHTML = `<div class="dayhead"><h3>${dayName}</h3><div class="small">${items.length} items</div></div>`;
+    const dayId = `${details.id}-${dayName.replace(/s+/g, "_")}`;
+    box.innerHTML = `
+      <div class="dayhead">
+        <h3>${dayName} <span class="badge daybadge" id="day-badge-${dayId}">⭕</span></h3>
+        <div class="small">${items.length} items</div>
+      </div>
+    `;
 
     items.forEach((item, idx) => {
       const id = idFor(weekName, dayName, idx);
@@ -299,13 +309,21 @@ function update(){
   document.getElementById("overall").textContent = `Overall Progress: ${pct}% (${checked}/${boxes.length})`;
   document.getElementById("bar").value = pct;
 
-  let badgeHTML = "";
-  for(const [weekName] of Object.entries(weeks)){
+  for(const [weekName, days] of Object.entries(weeks)){
+    const weekId = weekName.replace(/s+/g, "_");
     const weekBoxes = boxes.filter(cb => cb.id.startsWith(weekName + "__"));
-    const done = weekBoxes.length > 0 && weekBoxes.every(cb => cb.checked);
-    badgeHTML += `<span class="badge">${done ? "🏆" : "⭕"} ${weekName}</span>`;
+    const weekDone = weekBoxes.length > 0 && weekBoxes.every(cb => cb.checked);
+    const weekBadge = document.getElementById(`week-badge-${weekId}`);
+    if(weekBadge) weekBadge.textContent = weekDone ? "🏆" : "⭕";
+
+    for(const [dayName, items] of Object.entries(days)){
+      const dayId = `${weekId}-${dayName.replace(/s+/g, "_")}`;
+      const dayBoxes = items.map((_, i) => document.getElementById(idFor(weekName, dayName, i)));
+      const dayDone = dayBoxes.length > 0 && dayBoxes.every(cb => cb && cb.checked);
+      const dayBadge = document.getElementById(`day-badge-${dayId}`);
+      if(dayBadge) dayBadge.textContent = dayDone ? "🏆" : "⭕";
+    }
   }
-  document.getElementById("badges").innerHTML = badgeHTML;
 }
 
 function resetAll(){
