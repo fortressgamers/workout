@@ -61,6 +61,29 @@ button.secondary{background:#334155}
 button.danger{background:var(--danger)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 
+.segment{
+  display:flex;
+  width:100%;
+  background:#10141c;
+  border:1px solid #2b3442;
+  border-radius:999px;
+  overflow:hidden;
+  padding:4px;
+}
+.segment button{
+  flex:1;
+  background:transparent;
+  color:var(--muted);
+  border-radius:999px;
+  padding:12px 14px;
+  font-size:1rem;
+  transition:.2s ease;
+}
+.segment button.active{
+  background:var(--accent);
+  color:#fff;
+}
+
 .week-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -79,9 +102,7 @@ button.danger{background:var(--danger)}
   justify-content:center;
   gap:8px
 }
-.week-grid button:hover{
-  border-color:#596579
-}
+.week-grid button:hover{border-color:#596579}
 
 .badge{
   padding:4px 10px;
@@ -144,6 +165,9 @@ input[type=checkbox]{
 .kpi{font-size:1.05em;font-weight:700}
 .daybadge{min-width:34px;text-align:center}
 .controls{margin-top:10px}
+
+.tab-content{display:none}
+.tab-content.active{display:block}
 </style>
 </head>
 <body>
@@ -151,268 +175,381 @@ input[type=checkbox]{
 <p class="sub">Tap each checkbox as you finish it. Your progress saves automatically.</p>
 
 <div class="topbar">
+  <div class="segment">
+    <button class="active" id="tabBtnWorkout" onclick="showTab('workout')">Workout</button>
+    <button id="tabBtnGym" onclick="showTab('gym')">Open Gym</button>
+  </div>
+
   <div class="kpi" id="overall">Overall Progress: 0% (0/0)</div>
   <progress id="bar" value="0" max="100"></progress>
   <div class="row">
     <button onclick="resetAll()" class="danger">Reset All Progress</button>
   </div>
-  <div class="week-grid">
-    <button onclick="openWeek('Week 1')" id="top-week-Week_1"><span class="badge">⭕</span> Week 1</button>
-    <button onclick="openWeek('Week 2')" id="top-week-Week_2"><span class="badge">⭕</span> Week 2</button>
-    <button onclick="openWeek('Week 3')" id="top-week-Week_3"><span class="badge">⭕</span> Week 3</button>
-    <button onclick="openWeek('Week 4')" id="top-week-Week_4"><span class="badge">⭕</span> Week 4</button>
-  </div>
+  <div class="week-grid" id="weekGrid"></div>
 </div>
 
-<div id="content"></div>
+<div id="workoutTab" class="tab-content active">
+  <div id="workoutContent"></div>
+</div>
+
+<div id="gymTab" class="tab-content">
+  <div id="gymContent"></div>
+</div>
 
 <script>
-const weeks = {
-  "Week 1": {
-    "Monday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 2 sets x 8 reps",
-      "Push-ups or incline push-ups: 2 sets x 6 reps",
-      "Glute bridges: 2 sets x 10 reps",
-      "Bird-dogs: 2 sets x 6 reps per side",
-      "Plank: 2 sets x 15 seconds"
-    ],
-    "Tuesday": [
-      "Walk or march in place: 15–20 minutes",
-      "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
-    ],
-    "Wednesday": [
-      "Warm up 5–10 minutes",
-      "Reverse lunges: 2 sets x 6 reps per side",
-      "Pike push-ups or wall push-ups: 2 sets x 6 reps",
-      "Glute bridges: 2 sets x 10 reps",
-      "Dead bugs: 2 sets x 6 reps per side",
-      "Side plank on knees: 2 sets x 10 seconds per side"
-    ],
-    "Thursday": [
-      "Easy walk: 10–15 minutes",
-      "Gentle stretching: 5 minutes"
-    ],
-    "Friday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 2 sets x 8 reps",
-      "Push-ups or incline push-ups: 2 sets x 6 reps",
-      "Glute bridges: 2 sets x 10 reps",
-      "Bird-dogs: 2 sets x 6 reps per side",
-      "Plank: 2 sets x 15 seconds"
-    ],
-    "Saturday": [
-      "Warm up 5 minutes",
-      "Squats: 2 sets x 10 reps",
-      "Static lunge hold: 2 sets x 15 seconds per side",
-      "Glute bridges: 2 sets x 12 reps",
-      "Dead bugs: 2 sets x 8 reps per side",
-      "Plank: 2 sets x 15 seconds"
-    ],
-    "Sunday": [
-      "Full rest or a gentle 10-minute walk"
-    ]
+const plans = {
+  workout: {
+    storageKey: "workout_tracker_plan_workout_v1",
+    weeks: {
+      "Week 1": {
+        "Monday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 2 sets x 8 reps",
+          "Push-ups or incline push-ups: 2 sets x 6 reps",
+          "Glute bridges: 2 sets x 10 reps",
+          "Bird-dogs: 2 sets x 6 reps per side",
+          "Plank: 2 sets x 15 seconds"
+        ],
+        "Tuesday": [
+          "Walk or march in place: 15–20 minutes",
+          "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
+        ],
+        "Wednesday": [
+          "Warm up 5–10 minutes",
+          "Reverse lunges: 2 sets x 6 reps per side",
+          "Pike push-ups or wall push-ups: 2 sets x 6 reps",
+          "Glute bridges: 2 sets x 10 reps",
+          "Dead bugs: 2 sets x 6 reps per side",
+          "Side plank on knees: 2 sets x 10 seconds per side"
+        ],
+        "Thursday": [
+          "Easy walk: 10–15 minutes",
+          "Gentle stretching: 5 minutes"
+        ],
+        "Friday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 2 sets x 8 reps",
+          "Push-ups or incline push-ups: 2 sets x 6 reps",
+          "Glute bridges: 2 sets x 10 reps",
+          "Bird-dogs: 2 sets x 6 reps per side",
+          "Plank: 2 sets x 15 seconds"
+        ],
+        "Saturday": [
+          "Warm up 5 minutes",
+          "Squats: 2 sets x 10 reps",
+          "Static lunge hold: 2 sets x 15 seconds per side",
+          "Glute bridges: 2 sets x 12 reps",
+          "Dead bugs: 2 sets x 8 reps per side",
+          "Plank: 2 sets x 15 seconds"
+        ],
+        "Sunday": [
+          "Full rest or a gentle 10-minute walk"
+        ]
+      },
+      "Week 2": {
+        "Monday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 2 sets x 10 reps",
+          "Push-ups or incline push-ups: 2 sets x 8 reps",
+          "Glute bridges: 2 sets x 12 reps",
+          "Bird-dogs: 2 sets x 8 reps per side",
+          "Plank: 2 sets x 20 seconds"
+        ],
+        "Tuesday": [
+          "Walk or march in place: 20 minutes",
+          "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
+        ],
+        "Wednesday": [
+          "Warm up 5–10 minutes",
+          "Reverse lunges: 2 sets x 8 reps per side",
+          "Pike push-ups or wall push-ups: 2 sets x 8 reps",
+          "Glute bridges: 2 sets x 12 reps",
+          "Dead bugs: 2 sets x 8 reps per side",
+          "Side plank on knees: 2 sets x 15 seconds per side"
+        ],
+        "Thursday": [
+          "Easy walk: 10–15 minutes",
+          "Gentle stretching: 5 minutes"
+        ],
+        "Friday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 2 sets x 10 reps",
+          "Push-ups or incline push-ups: 2 sets x 8 reps",
+          "Glute bridges: 2 sets x 12 reps",
+          "Bird-dogs: 2 sets x 8 reps per side",
+          "Plank: 2 sets x 20 seconds"
+        ],
+        "Saturday": [
+          "Warm up 5 minutes",
+          "Squats: 2 sets x 12 reps",
+          "Static lunge hold: 2 sets x 20 seconds per side",
+          "Glute bridges: 2 sets x 12 reps",
+          "Dead bugs: 2 sets x 8 reps per side",
+          "Plank: 2 sets x 20 seconds"
+        ],
+        "Sunday": [
+          "Full rest or a gentle walk"
+        ]
+      },
+      "Week 3": {
+        "Monday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 3 sets x 8 reps",
+          "Push-ups or incline push-ups: 3 sets x 6–8 reps",
+          "Glute bridges: 3 sets x 10 reps",
+          "Bird-dogs: 3 sets x 8 reps per side",
+          "Plank: 3 sets x 20 seconds"
+        ],
+        "Tuesday": [
+          "Walk or march in place: 20–25 minutes",
+          "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
+        ],
+        "Wednesday": [
+          "Warm up 5–10 minutes",
+          "Reverse lunges: 3 sets x 8 reps per side",
+          "Pike push-ups or wall push-ups: 3 sets x 6–8 reps",
+          "Glute bridges: 3 sets x 10 reps",
+          "Dead bugs: 3 sets x 8 reps per side",
+          "Side plank on knees: 3 sets x 15 seconds per side"
+        ],
+        "Thursday": [
+          "Easy walk: 10–15 minutes",
+          "Gentle stretching: 5 minutes"
+        ],
+        "Friday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 3 sets x 8 reps",
+          "Push-ups or incline push-ups: 3 sets x 6–8 reps",
+          "Glute bridges: 3 sets x 10 reps",
+          "Bird-dogs: 3 sets x 8 reps per side",
+          "Plank: 3 sets x 20 seconds"
+        ],
+        "Saturday": [
+          "Warm up 5 minutes",
+          "Squats: 3 sets x 10 reps",
+          "Static lunge hold: 2 sets x 20 seconds per side",
+          "Glute bridges: 3 sets x 12 reps",
+          "Dead bugs: 2 sets x 10 reps per side",
+          "Plank: 2 sets x 20 seconds"
+        ],
+        "Sunday": [
+          "Full rest or a gentle walk"
+        ]
+      },
+      "Week 4": {
+        "Monday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 3 sets x 10 reps",
+          "Push-ups or incline push-ups: 3 sets x 8 reps",
+          "Glute bridges: 3 sets x 12 reps",
+          "Bird-dogs: 3 sets x 8 reps per side",
+          "Plank: 3 sets x 25 seconds"
+        ],
+        "Tuesday": [
+          "Walk or march in place: 20–25 minutes",
+          "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
+        ],
+        "Wednesday": [
+          "Warm up 5–10 minutes",
+          "Reverse lunges: 3 sets x 10 reps per side",
+          "Pike push-ups or wall push-ups: 3 sets x 8 reps",
+          "Glute bridges: 3 sets x 12 reps",
+          "Dead bugs: 3 sets x 10 reps per side",
+          "Side plank on knees: 3 sets x 20 seconds per side"
+        ],
+        "Thursday": [
+          "Easy walk: 10–15 minutes",
+          "Gentle stretching: 5 minutes"
+        ],
+        "Friday": [
+          "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
+          "Squats: 3 sets x 10 reps",
+          "Push-ups or incline push-ups: 3 sets x 8 reps",
+          "Glute bridges: 3 sets x 12 reps",
+          "Bird-dogs: 3 sets x 8 reps per side",
+          "Plank: 3 sets x 25 seconds"
+        ],
+        "Saturday": [
+          "Warm up 5 minutes",
+          "Squats: 3 sets x 12 reps",
+          "Static lunge hold: 2 sets x 25 seconds per side",
+          "Glute bridges: 3 sets x 12 reps",
+          "Dead bugs: 3 sets x 10 reps per side",
+          "Plank: 2 sets x 25 seconds"
+        ],
+        "Sunday": [
+          "Full rest or a gentle walk"
+        ]
+      }
+    }
   },
-  "Week 2": {
-    "Monday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 2 sets x 10 reps",
-      "Push-ups or incline push-ups: 2 sets x 8 reps",
-      "Glute bridges: 2 sets x 12 reps",
-      "Bird-dogs: 2 sets x 8 reps per side",
-      "Plank: 2 sets x 20 seconds"
-    ],
-    "Tuesday": [
-      "Walk or march in place: 20 minutes",
-      "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
-    ],
-    "Wednesday": [
-      "Warm up 5–10 minutes",
-      "Reverse lunges: 2 sets x 8 reps per side",
-      "Pike push-ups or wall push-ups: 2 sets x 8 reps",
-      "Glute bridges: 2 sets x 12 reps",
-      "Dead bugs: 2 sets x 8 reps per side",
-      "Side plank on knees: 2 sets x 15 seconds per side"
-    ],
-    "Thursday": [
-      "Easy walk: 10–15 minutes",
-      "Gentle stretching: 5 minutes"
-    ],
-    "Friday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 2 sets x 10 reps",
-      "Push-ups or incline push-ups: 2 sets x 8 reps",
-      "Glute bridges: 2 sets x 12 reps",
-      "Bird-dogs: 2 sets x 8 reps per side",
-      "Plank: 2 sets x 20 seconds"
-    ],
-    "Saturday": [
-      "Warm up 5 minutes",
-      "Squats: 2 sets x 12 reps",
-      "Static lunge hold: 2 sets x 20 seconds per side",
-      "Glute bridges: 2 sets x 12 reps",
-      "Dead bugs: 2 sets x 8 reps per side",
-      "Plank: 2 sets x 20 seconds"
-    ],
-    "Sunday": [
-      "Full rest or a gentle walk"
-    ]
-  },
-  "Week 3": {
-    "Monday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 3 sets x 8 reps",
-      "Push-ups or incline push-ups: 3 sets x 6–8 reps",
-      "Glute bridges: 3 sets x 10 reps",
-      "Bird-dogs: 3 sets x 8 reps per side",
-      "Plank: 3 sets x 20 seconds"
-    ],
-    "Tuesday": [
-      "Walk or march in place: 20–25 minutes",
-      "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
-    ],
-    "Wednesday": [
-      "Warm up 5–10 minutes",
-      "Reverse lunges: 3 sets x 8 reps per side",
-      "Pike push-ups or wall push-ups: 3 sets x 6–8 reps",
-      "Glute bridges: 3 sets x 10 reps",
-      "Dead bugs: 3 sets x 8 reps per side",
-      "Side plank on knees: 3 sets x 15 seconds per side"
-    ],
-    "Thursday": [
-      "Easy walk: 10–15 minutes",
-      "Gentle stretching: 5 minutes"
-    ],
-    "Friday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 3 sets x 8 reps",
-      "Push-ups or incline push-ups: 3 sets x 6–8 reps",
-      "Glute bridges: 3 sets x 10 reps",
-      "Bird-dogs: 3 sets x 8 reps per side",
-      "Plank: 3 sets x 20 seconds"
-    ],
-    "Saturday": [
-      "Warm up 5 minutes",
-      "Squats: 3 sets x 10 reps",
-      "Static lunge hold: 2 sets x 20 seconds per side",
-      "Glute bridges: 3 sets x 12 reps",
-      "Dead bugs: 2 sets x 10 reps per side",
-      "Plank: 2 sets x 20 seconds"
-    ],
-    "Sunday": [
-      "Full rest or a gentle walk"
-    ]
-  },
-  "Week 4": {
-    "Monday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 3 sets x 10 reps",
-      "Push-ups or incline push-ups: 3 sets x 8 reps",
-      "Glute bridges: 3 sets x 12 reps",
-      "Bird-dogs: 3 sets x 8 reps per side",
-      "Plank: 3 sets x 25 seconds"
-    ],
-    "Tuesday": [
-      "Walk or march in place: 20–25 minutes",
-      "Mobility: shoulder rolls, ankle circles, hip circles for 5 minutes"
-    ],
-    "Wednesday": [
-      "Warm up 5–10 minutes",
-      "Reverse lunges: 3 sets x 10 reps per side",
-      "Pike push-ups or wall push-ups: 3 sets x 8 reps",
-      "Glute bridges: 3 sets x 12 reps",
-      "Dead bugs: 3 sets x 10 reps per side",
-      "Side plank on knees: 3 sets x 20 seconds per side"
-    ],
-    "Thursday": [
-      "Easy walk: 10–15 minutes",
-      "Gentle stretching: 5 minutes"
-    ],
-    "Friday": [
-      "Warm up 5–10 minutes: march in place, arm circles, hip circles, 10 bodyweight squats",
-      "Squats: 3 sets x 10 reps",
-      "Push-ups or incline push-ups: 3 sets x 8 reps",
-      "Glute bridges: 3 sets x 12 reps",
-      "Bird-dogs: 3 sets x 8 reps per side",
-      "Plank: 3 sets x 25 seconds"
-    ],
-    "Saturday": [
-      "Warm up 5 minutes",
-      "Squats: 3 sets x 12 reps",
-      "Static lunge hold: 2 sets x 25 seconds per side",
-      "Glute bridges: 3 sets x 12 reps",
-      "Dead bugs: 3 sets x 10 reps per side",
-      "Plank: 2 sets x 25 seconds"
-    ],
-    "Sunday": [
-      "Full rest or a gentle walk"
-    ]
+  gym: {
+    storageKey: "workout_tracker_plan_gym_v1",
+    weeks: {
+      "Week 1": {
+        "Monday": [
+          "Warm up 5 minutes",
+          "Pull-ups or assisted pull-ups: 3 sets x 5 reps",
+          "Dips: 3 sets x 6 reps",
+          "Bodyweight squats: 3 sets x 15 reps",
+          "Hanging knee raises: 3 sets x 8 reps"
+        ],
+        "Wednesday": [
+          "Warm up 5 minutes",
+          "Push-ups on bench: 3 sets x 12 reps",
+          "Lunges: 3 sets x 10 reps per side",
+          "Inverted rows: 3 sets x 8 reps",
+          "Plank: 3 sets x 30 seconds"
+        ],
+        "Friday": [
+          "Warm up 5 minutes",
+          "Pull-ups or lat-focused variation: 3 sets x 5 reps",
+          "Dips: 3 sets x 6 reps",
+          "Step-ups: 3 sets x 10 reps per side",
+          "Crunches or leg raises: 3 sets x 12 reps"
+        ]
+      },
+      "Week 2": {
+        "Monday": [
+          "Warm up 5 minutes",
+          "Pull-ups or assisted pull-ups: 3 sets x 6 reps",
+          "Dips: 3 sets x 7 reps",
+          "Bodyweight squats: 3 sets x 18 reps",
+          "Hanging knee raises: 3 sets x 10 reps"
+        ],
+        "Wednesday": [
+          "Warm up 5 minutes",
+          "Push-ups on bench: 3 sets x 14 reps",
+          "Lunges: 3 sets x 12 reps per side",
+          "Inverted rows: 3 sets x 10 reps",
+          "Plank: 3 sets x 35 seconds"
+        ],
+        "Friday": [
+          "Warm up 5 minutes",
+          "Pull-ups or lat-focused variation: 3 sets x 6 reps",
+          "Dips: 3 sets x 7 reps",
+          "Step-ups: 3 sets x 12 reps per side",
+          "Crunches or leg raises: 3 sets x 15 reps"
+        ]
+      }
+    }
   }
 };
 
-const storageKey = "workout_tracker_pro_v7";
-const content = document.getElementById("content");
+let currentTab = "workout";
+const state = {
+  workout: { boxes: {}, dayDone: {}, weekDone: {} },
+  gym: { boxes: {}, dayDone: {}, weekDone: {} }
+};
 
-function idFor(w,d,i){ return `${w}__${d}__${i}`; }
+function planKey(){ return plans[currentTab].storageKey; }
+function planWeeks(){ return plans[currentTab].weeks; }
 
-for(const [weekName, days] of Object.entries(weeks)){
-  const details = document.createElement("details");
-  details.id = weekName.replace(/s+/g, "_");
-  details.open = false;
-  details.innerHTML = `<summary>${weekName}</summary>`;
-
-  for(const [dayName, items] of Object.entries(days)){
-    const box = document.createElement("div");
-    box.className = "daybox";
-    const dayId = `${details.id}-${dayName.replace(/s+/g, "_")}`;
-    box.innerHTML = `
-      <div class="dayhead">
-        <h3>${dayName} <span class="badge daybadge" id="day-badge-${dayId}">⭕</span></h3>
-        <div class="small">${items.length} items</div>
-      </div>
-    `;
-
-    items.forEach((item, idx) => {
-      const id = idFor(weekName, dayName, idx);
-      const label = document.createElement("label");
-      label.innerHTML = `<input type="checkbox" id="${id}"> ${item}`;
-      box.appendChild(label);
-    });
-
-    const btnRow = document.createElement("div");
-    btnRow.className = "row controls";
-
-    const completeBtn = document.createElement("button");
-    completeBtn.textContent = "Mark Day Complete";
-    completeBtn.onclick = () => {
-      box.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-      saveAndUpdate();
-    };
-
-    const clearBtn = document.createElement("button");
-    clearBtn.textContent = "Clear Day";
-    clearBtn.className = "secondary";
-    clearBtn.onclick = () => {
-      box.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-      saveAndUpdate();
-    };
-
-    btnRow.appendChild(completeBtn);
-    btnRow.appendChild(clearBtn);
-    box.appendChild(btnRow);
-
-    details.appendChild(box);
-  }
-
-  content.appendChild(details);
+function allBoxes(){
+  return [...document.querySelectorAll(`#${currentTab}Tab input[type="checkbox"]`)];
 }
 
-function allBoxes(){ return [...document.querySelectorAll('input[type="checkbox"]')]; }
+function idFor(w,d,i){ return `${currentTab}__${w}__${d}__${i}`; }
+
+function renderWeekButtons(){
+  const grid = document.getElementById("weekGrid");
+  grid.innerHTML = "";
+  Object.keys(planWeeks()).forEach(weekName => {
+    const btn = document.createElement("button");
+    const weekId = weekName.replace(/s+/g, "_");
+    btn.id = `top-week-${currentTab}-${weekId}`;
+    btn.onclick = () => openWeek(weekName);
+    btn.innerHTML = `<span class="badge">⭕</span> ${weekName}`;
+    grid.appendChild(btn);
+  });
+}
+
+function renderPlan(tab){
+  const container = document.getElementById(`${tab}Content`);
+  container.innerHTML = "";
+  const weeks = plans[tab].weeks;
+
+  for(const [weekName, days] of Object.entries(weeks)){
+    const details = document.createElement("details");
+    details.id = `${tab}_${weekName.replace(/s+/g, "_")}`;
+    details.open = false;
+    details.innerHTML = `<summary>${weekName}</summary>`;
+
+    for(const [dayName, items] of Object.entries(days)){
+      const box = document.createElement("div");
+      box.className = "daybox";
+      const dayId = `${details.id}-${dayName.replace(/s+/g, "_")}`;
+      box.innerHTML = `
+        <div class="dayhead">
+          <h3>${dayName} <span class="badge daybadge" id="${tab}-day-badge-${dayId}">⭕</span></h3>
+          <div class="small">${items.length} items</div>
+        </div>
+      `;
+
+      items.forEach((item, idx) => {
+        const id = `${tab}__${weekName}__${dayName}__${idx}`;
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" id="${id}"> ${item}`;
+        box.appendChild(label);
+      });
+
+      const btnRow = document.createElement("div");
+      btnRow.className = "row controls";
+
+      const completeBtn = document.createElement("button");
+      completeBtn.textContent = "Mark Day Complete";
+      completeBtn.onclick = () => {
+        box.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+        saveAndUpdate();
+      };
+
+      const clearBtn = document.createElement("button");
+      clearBtn.textContent = "Clear Day";
+      clearBtn.className = "secondary";
+      clearBtn.onclick = () => {
+        box.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        saveAndUpdate();
+      };
+
+      btnRow.appendChild(completeBtn);
+      btnRow.appendChild(clearBtn);
+      box.appendChild(btnRow);
+      details.appendChild(box);
+    }
+
+    container.appendChild(details);
+  }
+}
+
+function openWeek(weekName){
+  const el = document.getElementById(`${currentTab}_${weekName.replace(/s+/g, "_")}`);
+  if(el){ el.open = true; el.scrollIntoView({behavior:"smooth", block:"start"}); }
+}
+
+function showTab(tab){
+  currentTab = tab;
+  document.getElementById("workoutTab").classList.toggle("active", tab === "workout");
+  document.getElementById("gymTab").classList.toggle("active", tab === "gym");
+  document.getElementById("tabBtnWorkout").classList.toggle("active", tab === "workout");
+  document.getElementById("tabBtnGym").classList.toggle("active", tab === "gym");
+  renderWeekButtons();
+  renderPlan(tab);
+  loadState();
+  update();
+}
+
+function loadState(){
+  const saved = JSON.parse(localStorage.getItem(planKey()) || "{}");
+  allBoxes().forEach(cb => {
+    cb.checked = !!saved[cb.id];
+    cb.onchange = saveAndUpdate;
+  });
+}
 
 function saveAndUpdate(){
-  const state = {};
-  allBoxes().forEach(cb => state[cb.id] = cb.checked);
-  localStorage.setItem(storageKey, JSON.stringify(state));
+  const saved = {};
+  allBoxes().forEach(cb => saved[cb.id] = cb.checked);
+  localStorage.setItem(planKey(), JSON.stringify(saved));
   update();
 }
 
@@ -423,50 +560,32 @@ function update(){
   document.getElementById("overall").textContent = `Overall Progress: ${pct}% (${checked}/${boxes.length})`;
   document.getElementById("bar").value = pct;
 
-  for(const [weekName, days] of Object.entries(weeks)){
+  for(const [weekName, days] of Object.entries(planWeeks())){
     const weekId = weekName.replace(/s+/g, "_");
-    const weekBoxes = boxes.filter(cb => cb.id.startsWith(weekName + "__"));
+    const weekBoxes = boxes.filter(cb => cb.id.includes(`__${weekName}__`));
     const weekDone = weekBoxes.length > 0 && weekBoxes.every(cb => cb.checked);
-    const topBtn = document.getElementById(`top-week-${weekId}`);
-    if(topBtn){
-      topBtn.innerHTML = `<span class="badge ${weekDone ? 'done' : ''}">${weekDone ? '🏆' : '⭕'}</span> ${weekName}`;
-    }
+    const topBtn = document.getElementById(`top-week-${currentTab}-${weekId}`);
+    if(topBtn) topBtn.innerHTML = `<span class="badge ${weekDone ? 'done' : ''}">${weekDone ? '🏆' : '⭕'}</span> ${weekName}`;
 
     for(const [dayName, items] of Object.entries(days)){
-      const dayId = `${weekId}-${dayName.replace(/s+/g, "_")}`;
-      const dayBoxes = items.map((_, i) => document.getElementById(idFor(weekName, dayName, i)));
+      const dayId = `${currentTab}_${weekId}-${dayName.replace(/s+/g, "_")}`;
+      const dayBoxes = items.map((_, i) => document.getElementById(`${currentTab}__${weekName}__${dayName}__${i}`));
       const dayDone = dayBoxes.length > 0 && dayBoxes.every(cb => cb && cb.checked);
-      const dayBadge = document.getElementById(`day-badge-${dayId}`);
+      const dayBadge = document.getElementById(`${currentTab}-day-badge-${dayId}`);
       if(dayBadge) dayBadge.textContent = dayDone ? "🏆" : "⭕";
     }
   }
 }
 
-function openWeek(weekLabel){
-  const id = weekLabel.replace(/s+/g, "_");
-  const el = document.getElementById(id);
-  if(el){
-    el.open = true;
-    el.scrollIntoView({behavior:"smooth", block:"start"});
-  }
-}
-
 function resetAll(){
-  if(confirm("Reset all progress?")){
+  if(confirm("Reset all progress for this tab?")){
     allBoxes().forEach(cb => cb.checked = false);
-    localStorage.removeItem(storageKey);
+    localStorage.removeItem(planKey());
     update();
   }
 }
 
-(function load(){
-  const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
-  allBoxes().forEach(cb => {
-    cb.checked = !!saved[cb.id];
-    cb.addEventListener("change", saveAndUpdate);
-  });
-  update();
-})();
+showTab("workout");
 </script>
 </body>
 </html>
